@@ -1,16 +1,14 @@
-defmodule Shlack.User do
+defmodule Shlack.UserChannel do
   use Shlack.Web, :model
 
-  schema "users" do
-    field :name, :string
-    has_many :messages, Shlack.Message
-    has_many :user_channels, Shlack.UserChannel
-    has_many :channels, through: [:user_channels, :channel]
+  schema "user_channels" do
+    belongs_to :user, Shlack.User
+    belongs_to :channel, Shlack.Channel
 
     timestamps
   end
 
-  @required_fields ~w(name)
+  @required_fields ~w(user_id channel_id)
   @optional_fields ~w()
 
   @doc """
@@ -22,6 +20,6 @@ defmodule Shlack.User do
   def changeset(model, params \\ :empty) do
     model
     |> cast(params, @required_fields, @optional_fields)
-    |> validate_unique(:name, on: Repo)
+    |> validate_unique([:user_id, :channel_id], on: Repo)
   end
 end

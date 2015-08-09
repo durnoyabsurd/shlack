@@ -2,22 +2,72 @@ defmodule Shlack.RoomChannel do
   use Phoenix.Channel
   require Logger
 
-  def join("rooms:lobby", auth_msg, socket) do
-    {:ok, socket}
+  alias Shlack.Repo
+  alias Shlack.Channel
+  alias Shlack.User
+  alias Shlack.UserChannel
+  alias Shlack.Message
+
+  def join("rooms:" <> name, _, socket) do
+    channel = find_or_create_channel(name, socket)
+    user_channel = find_or_create_user_channel(channel, socket)
+
+    if user_channel do
+      send(self, :after_join)
+      {:ok, socket}
+    else
+      {:error, %{reason: "join failed"}}
+    end
   end
 
-  def join("rooms:" <> _private_room_id, _auth_msg, socket) do
-    {:error, %{reason: "unauthorized"}}
-  end
+  def handle_info(:after_join, socket) do
+    "rooms:" <> channel = socket.topic
 
-  def handle_in("new_msg", %{"body" => body}, socket) do
-    Logger.debug"> msg #{inspect body}"
-    broadcast! socket, "new_msg", %{body: body}
+    broadcast! socket, "user_joined", %{
+      user: socket.assigns.user.name,
+      channel: channel}
+
     {:noreply, socket}
   end
 
-  def handle_out("new_msg", payload, socket) do
-    push socket, "new_msg", payload
-    {:noreply, socket}
+  def handle_in("send_message", %{"text" => text, "channel" => channel_name}, socket) do
+    user = socket.assigns.user
+    channel = find_channel(channel_name)
+    message = Repo.insert(%Message{channel: channel, user: user, text: text})
+
+    if message do
+      broadcast! socket, "message_sent", %{
+        channel: channel.name,
+        user: user.name,
+        text: text}
+
+      {:noreply, socket}
+    else
+      {:error, %{reason: "message save failed"}}
+    end
+  end
+
+  defp find_or_create_channel(name, socket) do
+    find_channel(name) || create_channel(name, socket)
+  end
+
+  defp find_channel(name) do
+    Repo.get_by(Channel, name: name)
+  end
+
+  defp create_channel(name, socket) do
+    channel = Repo.insert(%Channel{name: name})
+
+    if channel do
+      broadcast! socket, "channel_created", %{name: name}
+    end
+
+    channel
+  end
+
+  defp find_or_create_user_channel(channel, socket) do
+    user = socket.assigns.user
+    Repo.get_by(UserChannel, user_id: user.id, channel_id: channel.id) ||
+      Repo.insert!(%UserChannel{user_id: user.id, channel_id: channel.id})
   end
 end

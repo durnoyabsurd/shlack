@@ -95,10 +95,15 @@ form.link, form.button {
   padding: .5em;
 }
 
+#messages time {
+  color: #DDD;
+  padding-right: .5em;
+  font-style: italic;
+}
+
 #message-form {
   display: block;
   bottom: 2em;
   height: 1em;
-  margin: 0;
-  padding: 0;
+  padding: 0 .5em;
 }

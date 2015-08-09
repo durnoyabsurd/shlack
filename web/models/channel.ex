@@ -3,6 +3,9 @@ defmodule Shlack.Channel do
 
   schema "channels" do
     field :name, :string
+    has_many :messages, Shlak.Message
+    has_many :user_channels, Shlack.UserChannel
+    has_many :users, through: [:user_channels, :user]
 
     timestamps
   end
