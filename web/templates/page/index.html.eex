@@ -1,3 +1,29 @@
-<div class="container" id="messages">
+<div class="chat-container">
+  <aside id="channels">
+    <h3>SHLACK</h3>
+    <br />
+    <h5>CHANNELS</h5>
+    <ul class="list-group">
+      <li class="list-group-item"><a href="#">#general</a></li>
+      <li class="list-group-item active">#random</li>
+      <li class="list-group-item"><a href="#">#stuff</a></li>
+    </ul>
+    <h5>USERS</h5>
+    <ul class="list-group">
+      <li class="list-group-item"><span class="indicator online"></span>Dude</li>
+      <li class="list-group-item"><span class="indicator offline"></span>Another Dude</li>
+      <li class="list-group-item"><span class="indicator offline"></span>John Doe</li>
+      <li class="list-group-item"><span class="indicator online"></span>Fey</li>
+    </ul>
+  </aside>
+  <div id="messages">
+  </div>
+  <div id="message-form" class="row">
+    <div class="col-sm-2">
+      <input type="text" class="form-control" placeholder="username" />
+    </div>
+    <div class="col-sm-10">
+      <input type="text" class="form-control" id="chat-input" />
+    </div>
+  </div>
 </div>
-<input type="text" id="chat-input" />

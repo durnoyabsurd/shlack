@@ -2,8 +2,6 @@ defmodule Shlack.Message do
   use Shlack.Web, :model
 
   schema "messages" do
-    field :user_id, :integer
-    field :channel_id, :integer
     field :text, :string
     belongs_to :user, Shlack.User
     belongs_to :channel, Shlack.Channel
