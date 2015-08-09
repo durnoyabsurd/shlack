@@ -7,19 +7,10 @@ defmodule Shlack.Router do
     plug :fetch_flash
     plug :protect_from_forgery
   end
-
-  pipeline :api do
-    plug :accepts, ["json"]
-  end
-
+  
   scope "/", Shlack do
-    pipe_through :browser # Use the default browser stack
+    pipe_through :browser
 
     get "/", PageController, :index
   end
-
-  # Other scopes may use custom stacks.
-  # scope "/api", Shlack do
-  #   pipe_through :api
-  # end
 end
