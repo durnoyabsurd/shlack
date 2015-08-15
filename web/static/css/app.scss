@@ -10,28 +10,7 @@ html, body {
   height: 100%;
 }
 
-/* Phoenix flash messages */
-.alert:empty { display: none; }
-
-/* Phoenix inline forms in links and buttons */
-form.link, form.button {
-  display: inline;
-}
-
-/* Customize container */
-@media (min-width: 768px) {
-  .container {
-    max-width: 730px;
-  }
-}
-.container-narrow > hr {
-  margin: 30px 0;
-}
-
-.chat-container {
-}
-
-#channels {
+#sidebar {
   position: absolute;
   left: 0;
   right: 80%;
@@ -40,18 +19,14 @@ form.link, form.button {
   background-color: #3C2A3B;
   color: #FFF;
   padding: 1em;
+  overflow: auto;
 }
 
-#channels h3 {
+#sidebar h3 {
   margin: 0;
 }
 
-#channels a {
-  color: #FFF;
-  text-decoration: none;
-}
-
-#channels .list-group-item {
+#sidebar .list-group-item {
   background: none;
   border: none;
   border-radius: .5em;
@@ -61,11 +36,11 @@ form.link, form.button {
   width: 110%;
 }
 
-#channels .list-group-item.active {
+#sidebar .list-group-item.active {
   background: #4F9689;
 }
 
-#channels .indicator {
+#sidebar .indicator {
   display: inline-block;
   border-radius: 50%;
   width: .6em;
@@ -74,12 +49,16 @@ form.link, form.button {
   margin-bottom: .07em;
 }
 
-#channels .online {
+#sidebar .online {
   background-color: #4f4;
 }
 
-#channels .offline {
+#sidebar .offline {
   background-color: #f44;
+}
+
+#channels-list>li {
+  cursor: pointer;
 }
 
 #messages, #message-form {
@@ -106,4 +85,9 @@ form.link, form.button {
   bottom: 2em;
   height: 1em;
   padding: 0 .5em;
+}
+
+.service-message {
+  color: #999;
+  font-style: italic;
 }

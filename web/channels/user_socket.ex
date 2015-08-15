@@ -1,8 +1,10 @@
 defmodule Shlack.UserSocket do
   use Phoenix.Socket
 
+  alias Shlack.Endpoint
   alias Shlack.Repo
   alias Shlack.User
+  alias Shlack.Channel
 
   channel "rooms:*", Shlack.RoomChannel
 
@@ -14,7 +16,6 @@ defmodule Shlack.UserSocket do
     user = name && (Repo.get_by(User, name: name) || register_user(name, socket))
 
     if user do
-      Shlack.Endpoint.broadcast! "user", "user_connected", %{user: user.name}
       {:ok, assign(socket, :user, user)}
     else
       :error
@@ -25,7 +26,7 @@ defmodule Shlack.UserSocket do
 
   defp register_user(name, socket) do
     user = Repo.insert!(%User{name: name})
-    Shlack.Endpoint.broadcast! "user", "user_registered", %{user: user.name}
+    Endpoint.broadcast! "user", "user_registered", %{user: user.name}
     user
   end
 end
