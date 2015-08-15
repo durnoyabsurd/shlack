@@ -3,28 +3,10 @@
   <br />
 
   <h5>CHANNELS</h5>
-  <ul class="list-group" id="channels-list">
-  </ul>
+  <ul class="list-group" id="channels-list"></ul>
 
   <h5>USERS</h5>
-  <ul class="list-group" id="users-list">
-    <li class="list-group-item">
-      <span class="indicator online"></span>
-      Dude
-    </li>
-    <li class="list-group-item">
-      <span class="indicator offline"></span>
-      Another Dude
-    </li>
-    <li class="list-group-item">
-      <span class="indicator offline"></span>
-      John Doe
-    </li>
-    <li class="list-group-item">
-      <span class="indicator online"></span>
-      Fey
-    </li>
-  </ul>
+  <ul class="list-group" id="users-list"></ul>
 </aside>
 
 <div id="messages"></div>

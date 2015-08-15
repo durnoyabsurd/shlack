@@ -61,7 +61,7 @@ let channelUsers = {};
 let username = localStorage.getItem("username");
 
 if (username == null) {
-  username = "User" + Math.ceil(Math.random() * 10000)
+  username = prompt("Enter your username");
   localStorage.setItem("username", username)
 }
 
