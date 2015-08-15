@@ -21,9 +21,9 @@ let addChannel = function(channel) {
   $channel.click(event => {
     let $self = $(event.target);
     let channel = $self.data('channel');
-    currentChannel = channel.name;
+    currentChannel = channel;
     $messages.find('.pane').addClass('hidden');
-    getChannelPane(channel.name).removeClass('hidden');
+    getChannelPane(channel).removeClass('hidden');
     $self.siblings().removeClass('active');
     $self.addClass('active');
   });
@@ -104,7 +104,6 @@ $messageInput.on("keypress", event => {
 });
 
 chan.on("incoming_message", payload => {
-  console.log("incoming message");
   getChannelPane(payload.channel).append(`
     <br />
     <time>${timestamp()}</time>&nbsp;
