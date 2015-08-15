@@ -13,8 +13,16 @@ defmodule Shlack.RoomChannel do
   end
 
   def handle_info(:after_join, socket) do
-    broadcast! socket, "user_joined", %{user: socket.assigns.user.name}
+    user = socket.assigns.user
+    broadcast! socket, "user_online", %{user: %{name: user.name, online: user.online}}
     {:noreply, socket}
+  end
+
+  def terminate(_, socket) do
+    user = %{socket.assigns.user | online: false}
+    Repo.update!(user)
+    broadcast! socket, "user_offline", %{user: %{name: user.name, online: user.online}}
+    {:ok, socket}
   end
 
   def handle_in("get_channels", _, socket) do
@@ -24,7 +32,7 @@ defmodule Shlack.RoomChannel do
   end
 
   def handle_in("get_users", _, socket) do
-    users = Repo.all(User) |> Enum.map &(%{name: &1.name})
+    users = Repo.all(User) |> Enum.map &(%{name: &1.name, online: &1.online})
     push socket, "users", %{users: users}
     {:noreply, socket}
   end

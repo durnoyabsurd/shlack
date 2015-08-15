@@ -36,11 +36,24 @@ let addChannel = function(channel) {
 }
 
 let addUser = function(user) {
+  let status = user.online ? 'online' : 'offline';
   $usersList.append(`
     <li class="list-group-item" data-user="${user.name}">
-      <!--<span class="indicator online"></span>-->
+      <span class="indicator status-${status}"></span>
       ${user.name}
     </li>`);
+}
+
+let findUser = function(user) {
+  return $usersList.find(`li[data-user="${user.name}"]`);
+}
+
+let toggleUser = function(user, status) {
+  let $indicator = findUser(user).find('.indicator');
+  $indicator.removeClass((idx, css) => {
+    return (css.match(/(^|\s)status-\S+/g))
+  });
+  $indicator.addClass(`status-${status}`)
 }
 
 let currentChannel = 'general';
@@ -95,8 +108,19 @@ chan.on("users", payload => {
   $.each(payload.users, (_, user) => { addUser(user) });
 });
 
-chan.on("user_joined", payload => {
-  addUser(payload.user);
+chan.on("user_online", payload => {
+  console.log(payload)
+  if (findUser(payload.user).length) {
+    toggleUser(payload.user, "online");
+  } else {
+    addUser(payload.user);
+  }
+});
+
+chan.on("user_offline", payload => {
+  console.log("user offline");
+  console.log(payload);
+  toggleUser(payload.user, "offline");
 });
 
 chan.join().receive("ok", _ => {

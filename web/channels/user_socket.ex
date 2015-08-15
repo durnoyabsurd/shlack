@@ -13,7 +13,7 @@ defmodule Shlack.UserSocket do
 
   def connect(params, socket) do
     name = params["username"]
-    user = name && (Repo.get_by(User, name: name) || register_user(name, socket))
+    user = name && find_or_register_user(name, socket)
 
     if user do
       {:ok, assign(socket, :user, user)}
@@ -24,9 +24,21 @@ defmodule Shlack.UserSocket do
 
   def id(socket), do: "users_socket:#{socket.assigns.user.id}"
 
+  defp find_or_register_user(name, socket) do
+    user = Repo.get_by(User, name: name)
+
+    if user do
+      put_online(user)
+    else
+      register_user(name, socket)
+    end
+  end
+
+  defp put_online(user) do
+    Repo.update!(%{user | online: true})
+  end
+
   defp register_user(name, socket) do
-    user = Repo.insert!(%User{name: name})
-    Endpoint.broadcast! "user", "user_registered", %{user: user.name}
-    user
+    Repo.insert!(%User{name: name, online: true})
   end
 end

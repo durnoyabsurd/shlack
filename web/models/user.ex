@@ -3,12 +3,13 @@ defmodule Shlack.User do
 
   schema "users" do
     field :name, :string
+    field :online, :boolean
     has_many :messages, Shlack.Message
     timestamps
   end
 
   @required_fields ~w(name)
-  @optional_fields ~w()
+  @optional_fields ~w(online)
 
   @doc """
   Creates a changeset based on the `model` and `params`.
