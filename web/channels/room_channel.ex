@@ -14,6 +14,13 @@ defmodule Shlack.RoomChannel do
 
   def handle_info(:after_join, socket) do
     user = socket.assigns.user
+
+    channels = Repo.all(Channel) |> Enum.map &(%{name: &1.name})
+    push socket, "channels", %{channels: channels}
+
+    users = Repo.all(User) |> Enum.map &(%{name: &1.name, online: &1.online})
+    push socket, "users", %{users: users}
+
     broadcast! socket, "user_online", %{user: %{name: user.name, online: user.online}}
     {:noreply, socket}
   end
@@ -25,16 +32,8 @@ defmodule Shlack.RoomChannel do
     {:ok, socket}
   end
 
-  def handle_in("get_channels", _, socket) do
-    channels = Repo.all(Channel) |> Enum.map &(%{name: &1.name})
-    push socket, "channels", %{channels: channels}
-    {:noreply, socket}
-  end
-
-  def handle_in("get_users", _, socket) do
-    users = Repo.all(User) |> Enum.map &(%{name: &1.name, online: &1.online})
-    push socket, "users", %{users: users}
-    {:noreply, socket}
+  def handle_in("ping", _, socket) do
+    {:reply, :pong, socket}
   end
 
   def handle_in("send_message", %{"text" => text, "channel" => channel_name}, socket) do
@@ -44,14 +43,14 @@ defmodule Shlack.RoomChannel do
     message = Repo.insert(%Message{channel: channel, user: user, text: text})
 
     if message do
-      broadcast! socket, "message_sent", %{
+      broadcast! socket, "incoming_message", %{
         channel: channel.name,
         user: user.name,
         text: text}
 
-      {:noreply, socket}
+      {:reply, :ok, socket}
     else
-      {:error, %{reason: "message save failed"}}
+      {:reply, {:error, %{reason: "message save failed"}}, socket}
     end
   end
 

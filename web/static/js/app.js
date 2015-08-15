@@ -23,14 +23,14 @@ let addChannel = function(channel) {
     let channel = $self.data('channel');
     currentChannel = channel.name;
     $messages.find('.pane').addClass('hidden');
-    getChannelPane(channel).removeClass('hidden');
+    getChannelPane(channel.name).removeClass('hidden');
     $self.siblings().removeClass('active');
     $self.addClass('active');
   });
 
   $channelsList.append($channel);
 
-  var $pane = $(`<div class="pane" data-channel="${channel}"></div>`);
+  var $pane = $(`<div class="pane" data-channel="${channel.name}"></div>`);
   if (channel.name != currentChannel) { $pane.addClass('hidden'); }
   $messages.append($pane);
 }
@@ -56,6 +56,14 @@ let toggleUser = function(user, status) {
   $indicator.addClass(`status-${status}`)
 }
 
+let lockInput = function(text) {
+  $messageInput.attr('disabled', 'disabled').val(text);
+}
+
+let unlockInput = function(text) {
+  $messageInput.removeAttr('disabled').val(text);
+}
+
 let currentChannel = 'general';
 let channelUsers = {};
 let username = localStorage.getItem("username");
@@ -65,26 +73,38 @@ if (username == null) {
   localStorage.setItem("username", username)
 }
 
-let socket = new Socket("/socket");
-socket.connect({username: username});
-let chan = socket.chan("rooms:_", {});
-
 let $messages = $("#messages");
 let $channelsList = $("#channels-list");
 let $usersList = $("#users-list")
 let $messageInput = $("#message-input");
 
+lockInput("connecting…");
+let socket = new Socket("/socket");
+socket.connect({username: username});
+let chan = socket.chan("rooms:_", {});
+
 $messageInput.on("keypress", event => {
   if (event.keyCode === 13) {
-    chan.push("send_message", {
-      text: $messageInput.val(),
-      channel: currentChannel });
-
-    $messageInput.val("");
+    let text = $messageInput.val();
+    let data = { text: text, channel: currentChannel };
+    lockInput("sending…");
+    chan.push("send_message", data)
+        .receive("ok", _ => {
+          unlockInput("");
+        })
+        .receive("error", (payload) => {
+          unlockInput(text);
+          alert(payload.reason);
+        })
+        .after(5000, () => {
+          unlockInput(text);
+          alert("Message sending timed out");
+        });
   }
 });
 
-chan.on("message_sent", payload => {
+chan.on("incoming_message", payload => {
+  console.log("incoming message");
   getChannelPane(payload.channel).append(`
     <br />
     <time>${timestamp()}</time>&nbsp;
@@ -109,7 +129,6 @@ chan.on("users", payload => {
 });
 
 chan.on("user_online", payload => {
-  console.log(payload)
   if (findUser(payload.user).length) {
     toggleUser(payload.user, "online");
   } else {
@@ -118,16 +137,36 @@ chan.on("user_online", payload => {
 });
 
 chan.on("user_offline", payload => {
-  console.log("user offline");
-  console.log(payload);
   toggleUser(payload.user, "offline");
 });
 
-chan.join().receive("ok", _ => {
-  console.log("Connected");
-  chan.push("get_channels", {});
-  chan.push("get_users", {});
-});
+let putOnline = () => {
+  $('.indicator-main').removeClass('status-offline').addClass('status-online');
+}
+
+let putOffline = () => {
+  $('.indicator-main').removeClass('status-online').addClass('status-offline');
+}
+
+chan.join()
+    .receive("ok", _ => {
+      putOnline();
+      unlockInput("");
+
+      setInterval(() => {
+        chan.push("ping")
+            .receive("pong", putOnline)
+            .after(3000, putOffline)
+      }, 5000);
+    })
+    .receive("error", _ => {
+      putOffline();
+      alert("An error occurred while connecting to the server");
+    })
+    .after(5000, () => {
+      putOffline();
+      alert("Connection to the server timed out");
+    });
 
 let App = {};
 export default App

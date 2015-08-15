@@ -1,5 +1,8 @@
 <aside id="sidebar">
-  <h3>SHLACK</h3>
+  <h3>
+    <span class="indicator indicator-main status-offline"></span>
+    SHLACK
+  </h3>
   <br />
 
   <h5>CHANNELS</h5>
