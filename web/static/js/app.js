@@ -1,11 +1,5 @@
 import {Socket} from "phoenix"
 
-let timestamp = function() {
-  let time = new Date();
-  return [time.getHours(), time.getMinutes(), time.getSeconds()]
-           .map(n => ("0" + n).slice(-2)).join(':');
-}
-
 let getChannelPane = function(channel) {
   return $messages.find(`.pane[data-channel=${channel}]`);
 };
@@ -42,6 +36,20 @@ let addUser = function(user) {
       <span class="indicator status-${status}"></span>
       ${user.name}
     </li>`);
+}
+
+let addMessage = function(message) {
+  let time = new Date(Date.parse(message.inserted_at));
+  let time_str = [time.getHours(), time.getMinutes(), time.getSeconds()]
+                   .map(n => ("0" + n).slice(-2)).join(':');
+
+  getChannelPane(message.channel).append(`
+    <br />
+    <time>${time_str}</time>&nbsp;
+    <strong>${message.user}</strong>&nbsp;
+    ${message.text}`);
+
+  $messages[0].scrollTop = $messages[0].scrollHeight;
 }
 
 let findUser = function(user) {
@@ -104,13 +112,7 @@ $messageInput.on("keypress", event => {
 });
 
 chan.on("incoming_message", payload => {
-  getChannelPane(payload.channel).append(`
-    <br />
-    <time>${timestamp()}</time>&nbsp;
-    <strong>${payload.user}</strong>&nbsp;
-    ${payload.text}`);
-
-  $messages[0].scrollTop = $messages[0].scrollHeight;
+  addMessage(payload);
 });
 
 chan.on("channels", payload => {
@@ -137,6 +139,14 @@ chan.on("user_online", payload => {
 
 chan.on("user_offline", payload => {
   toggleUser(payload.user, "offline");
+});
+
+chan.on("messages", payload => {
+  console.log("messages");
+  console.log(payload);
+  let $pane = getChannelPane(payload.channel);
+  $pane.empty();
+  $.each(payload.messages, (_, message) => addMessage(message));
 });
 
 let putOnline = () => {

@@ -1,6 +1,9 @@
 defmodule Shlack.RoomChannel do
   use Phoenix.Channel
   require Logger
+  require Enum
+  require Ecto.Adapters.SQL
+  require Ecto.DateTime
 
   alias Shlack.Repo
   alias Shlack.Channel
@@ -15,13 +18,15 @@ defmodule Shlack.RoomChannel do
   def handle_info(:after_join, socket) do
     user = socket.assigns.user
 
+    broadcast! socket, "user_online", %{user: %{name: user.name, online: user.online}}
+
     channels = Repo.all(Channel) |> Enum.map &(%{name: &1.name})
     push socket, "channels", %{channels: channels}
 
     users = Repo.all(User) |> Enum.map &(%{name: &1.name, online: &1.online})
     push socket, "users", %{users: users}
 
-    broadcast! socket, "user_online", %{user: %{name: user.name, online: user.online}}
+    push socket, "messages", %{messages: messages_log}
     {:noreply, socket}
   end
 
@@ -40,17 +45,21 @@ defmodule Shlack.RoomChannel do
     user = socket.assigns.user
     channel = Repo.get_by(Channel, name: channel_name)
 
-    message = Repo.insert(%Message{channel: channel, user: user, text: text})
+    message = Repo.insert(%Message{
+      channel_id: channel.id,
+      user_id: user.id,
+      text: text})
 
-    if message do
-      broadcast! socket, "incoming_message", %{
-        channel: channel.name,
-        user: user.name,
-        text: text}
-
-      {:reply, :ok, socket}
-    else
-      {:reply, {:error, %{reason: "message save failed"}}, socket}
+    case message do
+      {:ok, message} ->
+        broadcast! socket, "incoming_message", %{
+          channel: channel.name,
+          user: user.name,
+          text: text,
+          inserted_at: message.inserted_at}
+        {:reply, :ok, socket}
+      {:error, _} ->
+        {:reply, {:error, %{reason: "message save failed"}}, socket}
     end
   end
 
@@ -66,5 +75,39 @@ defmodule Shlack.RoomChannel do
     end
 
     channel
+  end
+
+  defp messages_log do
+    # Last 100 messages for each channel
+    query = ~s"""
+      SELECT *
+      FROM (
+        SELECT
+          ROW_NUMBER() OVER (
+            PARTITION BY m.channel_id
+            ORDER BY m.inserted_at DESC) AS r,
+          c.name AS channel,
+          u.name AS user,
+          m.text,
+          m.inserted_at
+        FROM messages AS m
+        INNER JOIN channels AS c
+          ON c.id = m.channel_id
+        INNER JOIN users AS u
+          ON u.id = m.user_id) AS x
+      WHERE x.r <= 100
+      ORDER BY x.inserted_at
+    """
+
+    %{rows: data} = Ecto.Adapters.SQL.query(Repo, query, [])
+
+    Enum.map data, fn(row) ->
+      {:ok, inserted_at} = Enum.at(row, 4) |> Ecto.DateTime.cast
+
+      %{channel: Enum.at(row, 1),
+        user: Enum.at(row, 2),
+        text: Enum.at(row, 3),
+        inserted_at: Ecto.DateTime.to_iso8601(inserted_at)}
+    end
   end
 end
