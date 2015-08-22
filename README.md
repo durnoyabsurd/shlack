@@ -1,5 +1,7 @@
 # Shlack
 
+![screenshot.png](screenshot.png?raw=true)
+
 To start your new Phoenix application:
 
 1. Install dependencies with `mix deps.get`
